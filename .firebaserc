@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "anime-dom",
+    "main": "anime-dom"
+  },
+  "targets": {}
+}

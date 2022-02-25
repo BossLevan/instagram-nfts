@@ -11,7 +11,7 @@ class IPFSmodel {
       ipfsHash: json["IpfsHash"] as String,
       pinSize: json["PinSize"] as int,
       timeStamp: json["Timestamp"] as String,
-      isDuplicate: json["isDuplicate"] as bool,
+      // isDuplicate: json["isDuplicate"] as bool,
     );
   }
 }

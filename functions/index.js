@@ -3,7 +3,16 @@ const axios = require("axios");
 const functions = require("firebase-functions");
 const pinataSDK = require("@pinata/sdk");
 
-exports.pinFileToIPFS = functions.https.onCall((data, context) => {
+exports.pinFileToIPFS = functions.region('europe-west2').https.onCall((data, context) => {
+  // response.set({
+  //       'Access-Control-Allow-Origin': '*',
+  //       'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+  //       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+  //   });
+  //   if (request.method == "OPTIONS") {
+  //       response.sendStatus(200);
+  //       return;
+  //   }
   const postUrl = data.message;
   const postName = data.name;
   const description = data.description;

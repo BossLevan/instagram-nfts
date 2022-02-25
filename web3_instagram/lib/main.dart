@@ -71,9 +71,9 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
   Future callFunction(String url, String name, String description) async {
     //Call of the IPFS function
-    HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
-        'pinFileToIPFS',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 5)));
+    HttpsCallable callable =
+        FirebaseFunctions.instanceFor(region: 'europe-west2')
+            .httpsCallable('pinFileToIPFS', options: HttpsCallableOptions());
     try {
       final HttpsCallableResult result = await callable.call(
         <String, String>{
@@ -82,7 +82,9 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
           'description': description
         },
       );
+
       _iPFShash = IPFSmodel.fromJson(result.data).ipfsHash;
+
       return _iPFShash;
     } on FirebaseFunctionsException catch (e) {
       debugPrint('caught firebase functions exception');
@@ -132,6 +134,10 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     var jsonAbi = jsonDecode(abiStringFile);
     final _abiCode = jsonEncode(jsonAbi);
     final jsonInterface = Interface(_abiCode);
+
+    if (isConnectedToMetamask == false) {
+      connectToEthereum();
+    }
 
     final _ownAddress = await signer.getAddress();
 
@@ -204,8 +210,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       );
       final authUrl =
           'https://api.instagram.com/oauth/authorize?client_id=466508148203801&redirect_uri=$redirectUri&scope=user_profile,user_media&response_type=code';
-      _popupWin = html.window.open(authUrl, "Connect your Instagram",
-          "width=800, height=900, scrollbars=yes");
+      _popupWin = html.window.open(authUrl, "_blank");
     });
   }
 

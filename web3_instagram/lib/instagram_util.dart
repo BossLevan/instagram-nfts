@@ -189,7 +189,7 @@ class InstagramUtil {
     map['client_id'] = appID;
     map['client_secret'] = appSecret;
     map['grant_type'] = 'authorization_code';
-    map['redirect_uri'] = 'https://127.0.0.1:8080/static.html';
+    map['redirect_uri'] = 'https://instamint.web.app/static.html';
     map['code'] = accessCode;
     String urlTwo = 'https://api.instagram.com/oauth/access_token';
     http.Response response = await http.post(Uri.parse(urlTwo), body: map);

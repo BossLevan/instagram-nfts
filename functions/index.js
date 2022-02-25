@@ -42,12 +42,11 @@ exports.pinFileToIPFS = functions.region('europe-west2').https.onCall((data, con
             //handle results here
             return result;
             }).catch((err) => {
-                //handle error here
-                console.log(err);
+              throw new functions.https.HttpsError('unknown', err.message, err)
             });
     }).catch((err) => {
       // handle error here
-      console.log(err);
+      throw new functions.https.HttpsError('unknown', err.message, err)
     });
   });
 });

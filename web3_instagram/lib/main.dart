@@ -24,7 +24,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(MaterialApp(
-      theme: ThemeData(fontFamily: 'Euclid Circular A'), home: const MyApp()));
+      theme: ThemeData(fontFamily: 'Sofia Pro'), home: const MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -327,20 +327,21 @@ class _BodyWidgetState extends State<BodyWidget> {
             ),
             const SizedBox(height: 30),
             const Text('Convert your Instagram Posts to NFTs⚡️',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 54,
+                  fontSize: 50,
                   fontWeight: FontWeight.bold,
                 )),
             const SizedBox(height: 30),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 365),
               child: Text(
-                'Mint your Instagram posts as NFTs and list them on your favourite marketplace! Connect your Instagram account below to get started!',
+                'Mint your Instagram posts as NFTs and list them on your Showtime! Connect your Instagram account below to get started!',
                 style: TextStyle(
                   color: Colors.white54,
                   height: 1.4,
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -355,7 +356,7 @@ class _BodyWidgetState extends State<BodyWidget> {
             unselectedLabelColor: Colors.grey[400],
             labelStyle: const TextStyle(
               color: Color(0xFF4E4E4E),
-              fontFamily: 'Euclid Circular A',
+              fontFamily: 'Sofia Pro',
               fontWeight: FontWeight.w600,
               fontSize: 18,
             ),
@@ -478,7 +479,7 @@ class _ThirdTabState extends State<ThirdTab> {
                   style: TextStyle(
                     height: 1.5,
                     color: Color(0xFF4E4E4E),
-                    fontFamily: 'Euclid Circular A',
+                    fontFamily: 'Sofia Pro',
                     fontWeight: FontWeight.w400,
                     fontSize: 20,
                   ),
@@ -506,7 +507,7 @@ class _ThirdTabState extends State<ThirdTab> {
                   "Congratulations!",
                   style: TextStyle(
                     color: Color(0xFF4E4E4E),
-                    fontFamily: 'Euclid Circular A',
+                    fontFamily: 'Sofia Pro',
                     fontWeight: FontWeight.w600,
                     fontSize: 24,
                   ),
@@ -521,7 +522,7 @@ class _ThirdTabState extends State<ThirdTab> {
                     style: TextStyle(
                       height: 1.5,
                       color: Color(0xFF4E4E4E),
-                      fontFamily: 'Euclid Circular A',
+                      fontFamily: 'Sofia Pro',
                       fontWeight: FontWeight.w400,
                       fontSize: 20,
                     ),
@@ -730,6 +731,7 @@ class _SecondTabState extends State<SecondTab> {
                       "Instamint",
                       snapshot.data?[1][selectedIndex],
                     );
+                    //show a loading indicator
                     TransactionResponse tx = await widget.mintNFTs!(hash);
                     widget.refreshCallback!(tx);
                     await Future.delayed(const Duration(milliseconds: 200));
@@ -768,75 +770,80 @@ class FirstTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(
-          height: 40,
-        ),
-        const SizedBox(
-          height: 50,
-          width: 50,
-          child: Image(
-              image: NetworkImage(
-                  "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/800px-Instagram_logo_2016.svg.png")),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          "Connect your Instagram",
-          style: TextStyle(
-            color: Color(0xFF4E4E4E),
-            fontFamily: 'Euclid Circular A',
-            fontWeight: FontWeight.w600,
-            fontSize: 24,
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(
+            height: 20,
           ),
-        ),
-        const SizedBox(height: 20),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 300.0),
-          child: Text(
-            "Connect your Instagram account to import your pictures from Instagram. Instamint will NOT share or store your data ",
-            textAlign: TextAlign.center,
+          const SizedBox(
+            height: 50,
+            width: 50,
+            child: Image(
+                image: NetworkImage(
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/800px-Instagram_logo_2016.svg.png")),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "Connect your Instagram",
             style: TextStyle(
-              height: 1.5,
               color: Color(0xFF4E4E4E),
-              fontFamily: 'Euclid Circular A',
-              fontWeight: FontWeight.w400,
-              fontSize: 20,
+              fontFamily: 'Sofia Pro',
+              fontWeight: FontWeight.w600,
+              fontSize: 24,
             ),
           ),
-        ),
-        const SizedBox(
-          height: 40,
-        ),
-        TextButton.icon(
-          style: ButtonStyle(
-              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50.0),
-                ),
+          const SizedBox(height: 20),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 300.0),
+            child: Text(
+              "Connect your Instagram account to import your pictures from Instagram. Instamint will NOT share or store your data ",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                height: 1.5,
+                color: Color(0xFF4E4E4E),
+                fontFamily: 'Sofia Pro',
+                fontWeight: FontWeight.w400,
+                fontSize: 18,
               ),
-              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                  const EdgeInsets.all(20)),
-              backgroundColor:
-                  MaterialStateProperty.all<Color>(const Color(0xFF2E2B2B))),
-          //connect to instagram function
-          onPressed: () async {
-            function!();
-            await Future.delayed(const Duration(milliseconds: 100));
-            controller?.animateTo(1);
-          },
-          icon: const Icon(
-            Icons.north_east,
-            color: Colors.white,
-            size: 20,
+            ),
           ),
-          label: const Text(
-            'Connect',
-            style: TextStyle(
-                color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+          const SizedBox(
+            height: 30,
           ),
-        )
-      ],
+          TextButton.icon(
+            style: ButtonStyle(
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50.0),
+                  ),
+                ),
+                padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                    const EdgeInsets.all(20)),
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(const Color(0xFF2E2B2B))),
+            //connect to instagram function
+            onPressed: () async {
+              function!();
+              await Future.delayed(const Duration(milliseconds: 100));
+              controller?.animateTo(1);
+            },
+            icon: const Icon(
+              Icons.north_east,
+              color: Colors.white,
+              size: 20,
+            ),
+            label: const Text(
+              'Connect',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600),
+            ),
+          )
+        ],
+      ),
     );
   }
 }

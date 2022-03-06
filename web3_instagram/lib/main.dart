@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
@@ -9,22 +7,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_web3/flutter_web3.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:web3_instagram/http_client.dart';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
-import 'package:http/http.dart' as http;
+
 import 'package:web3_instagram/instagram_util.dart';
-import 'package:web3_instagram/showtime_model.dart';
+
 import 'package:web3_instagram/ipfs_model.dart';
-import 'package:web3dart/crypto.dart';
-import 'package:web3dart/web3dart.dart';
+import 'package:oktoast/oktoast.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MaterialApp(
-      theme: ThemeData(fontFamily: 'Sofia Pro'), home: const MyApp()));
+  runApp(OKToast(
+    child: MaterialApp(
+        theme: ThemeData(fontFamily: 'Sofia Pro'), home: const MyApp()),
+  ));
 }
 
 class MyApp extends StatefulWidget {
@@ -38,7 +36,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   TabController? _tabController;
   bool? isConnectedToMetamask = false;
   String? _token = '';
-  String? accessToken;
+  String? _accessToken;
   String? userID;
   final client = PiniataApiClient();
   String? tokenId = '';
@@ -56,15 +54,14 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   Future _getAccessToken() async {
     final _access =
         await InstagramUtil(accessCode: _token).getShortLivedToken();
-    accessToken = _access[0];
+    _accessToken = _access[0];
     userID = _access[1];
-    print("gotten access token");
   }
 
   Future _getUserMedia() async {
     await _getAccessToken();
-    final _media =
-        await InstagramUtil(accessCode: _token).getMedia(accessToken!, userID!);
+    final _media = await InstagramUtil(accessCode: _token)
+        .getMedia(_accessToken!, userID!);
     iGUrl = _media[0][0];
     return [_media[0], _media[4]];
   }
@@ -86,15 +83,18 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       _iPFShash = IPFSmodel.fromJson(result.data).ipfsHash;
 
       return _iPFShash;
-    } on FirebaseFunctionsException catch (e) {
-      debugPrint('caught firebase functions exception');
-      debugPrint(e.code);
-      debugPrint(e.message);
-      debugPrint(e.details);
-    } catch (e) {
-      debugPrint('caught generic exception');
-      debugPrint(e.toString());
+    } on FirebaseFunctionsException {
+      // debugPrint('caught firebase functions exception');
+      // debugPrint(e.code);
+      // debugPrint(e.message);
+      // debugPrint(e.details);
+      return null;
     }
+    // catch (e) {
+    //   // debugPrint('caught generic exception');
+    //   // debugPrint(e.toString());
+    //   return null;
+    // }
   }
 
   void _login(String data) {
@@ -112,18 +112,36 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
   void connectToEthereum() async {
     if (ethereum != null) {
-      try {
-        // Prompt user to connect to the provider, i.e. confirm the connection modal
-        final accs = await ethereum!
-            .requestAccount(); // Get all accounts in node disposal
-        accs; // [foo,bar]
-        setState(() {
-          isConnectedToMetamask = true;
-        });
-        debugPrint("successfully connected Metamask");
-      } on EthereumUserRejected {
-        debugPrint('User rejected the modal');
+      // Prompt user to connect to the provider, i.e. confirm the connection modal
+      final accs =
+          await ethereum!.requestAccount(); // Get all accounts in node disposal
+      accs;
+      final int chainId = await ethereum!.getChainId();
+      //switch chain
+      if (chainId != 137) {
+        try {
+          await ethereum!.walletSwitchChain(137);
+        } on EthereumException {
+          await ethereum!.walletAddChain(
+            chainId: 137,
+            chainName: 'Polygon Mainnet',
+            nativeCurrency:
+                CurrencyParams(name: 'MATIC', symbol: 'MATIC', decimals: 18),
+            rpcUrls: ['https://polygon-rpc.com/'],
+          );
+        }
       }
+      setState(() {
+        isConnectedToMetamask = true;
+      });
+      // try {
+
+      // } on EthereumUserRejected {
+      //   DoNothingAction();
+      // }
+    } else {
+      showToast("Please download Metamask",
+          position: ToastPosition.bottom, textPadding: const EdgeInsets.all(8));
     }
   }
 
@@ -288,11 +306,11 @@ class _BodyWidgetState extends State<BodyWidget> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Instamint",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 30,
+                    fontSize: ResponsiveWidget.isSmallScreen(context) ? 18 : 30,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -311,14 +329,17 @@ class _BodyWidgetState extends State<BodyWidget> {
                           }
                       : () => DoNothingAction(),
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: ResponsiveWidget.isSmallScreen(context)
+                        ? const EdgeInsets.all(12.0)
+                        : const EdgeInsets.all(16.0),
                     child: Text(
                       widget.isConnected == false
                           ? 'Connect Wallet'
                           : "Connected",
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize:
+                              ResponsiveWidget.isSmallScreen(context) ? 16 : 18,
                           fontWeight: FontWeight.w400),
                     ),
                   ),
@@ -326,22 +347,24 @@ class _BodyWidgetState extends State<BodyWidget> {
               ],
             ),
             const SizedBox(height: 30),
-            const Text('Convert your Instagram Posts to NFTs⚡️',
+            Text('Convert your Instagram Posts to NFTs⚡️',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 50,
+                  fontSize: ResponsiveWidget.isSmallScreen(context) ? 26 : 50,
                   fontWeight: FontWeight.bold,
                 )),
-            const SizedBox(height: 30),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 365),
+            SizedBox(height: ResponsiveWidget.isSmallScreen(context) ? 16 : 30),
+            Padding(
+              padding: ResponsiveWidget.isSmallScreen(context)
+                  ? EdgeInsets.symmetric(horizontal: 30)
+                  : EdgeInsets.symmetric(horizontal: 365),
               child: Text(
                 'Mint your Instagram posts as NFTs and list them on your Showtime! Connect your Instagram account below to get started!',
                 style: TextStyle(
                   color: Colors.white54,
                   height: 1.4,
-                  fontSize: 20,
+                  fontSize: ResponsiveWidget.isSmallScreen(context) ? 16 : 20,
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -353,6 +376,7 @@ class _BodyWidgetState extends State<BodyWidget> {
       IgnorePointer(
         child: TabBar(
             labelColor: Colors.black87,
+            indicatorColor: Colors.indigo,
             unselectedLabelColor: Colors.grey[400],
             labelStyle: const TextStyle(
               color: Color(0xFF4E4E4E),
@@ -375,9 +399,11 @@ class _BodyWidgetState extends State<BodyWidget> {
           physics: const NeverScrollableScrollPhysics(),
           controller: widget.tabController!,
           children: [
-            FirstTab(
-                function: widget.functions![0],
-                controller: widget.tabController!),
+            Center(
+              child: FirstTab(
+                  function: widget.functions![0],
+                  controller: widget.tabController!),
+            ),
             SecondTab(
               getMedia: widget.functions![2],
               token: widget.token,
@@ -458,7 +484,7 @@ class _ThirdTabState extends State<ThirdTab> {
             child: Column(
               children: const [
                 SizedBox(
-                  height: 40,
+                  height: 20,
                 ),
                 SizedBox(
                   height: 50,
@@ -639,6 +665,7 @@ class _SecondTabState extends State<SecondTab> {
   bool isMintingNFT = false;
   int selectedIndex = 0;
   String? url;
+  bool isMetamaskLoading = false;
 
   @override
   void initState() {
@@ -668,9 +695,10 @@ class _SecondTabState extends State<SecondTab> {
           } else if (snapshot.hasData) {
             url = snapshot.data![0][selectedIndex];
             return Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(
-                  height: 10,
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.02,
                 ),
                 SizedBox(
                   height: 200,
@@ -710,42 +738,80 @@ class _SecondTabState extends State<SecondTab> {
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: 40,
-                ),
-                TextButton(
-                  style: ButtonStyle(
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50.0),
+                // SizedBox(
+                //   height: MediaQuery.of(context).size.height * 0.02,
+                // ),
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        style: ButtonStyle(
+                            shape: MaterialStateProperty.all<
+                                RoundedRectangleBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50.0),
+                              ),
+                            ),
+                            padding:
+                                MaterialStateProperty.all<EdgeInsetsGeometry>(
+                                    const EdgeInsets.all(20)),
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                const Color(0xFF2E2B2B))),
+                        //mint NFT
+                        onPressed: () async {
+                          setState(() {
+                            isMetamaskLoading = true;
+                          });
+                          final hash = await widget.getHash!(
+                            snapshot.data?[0][selectedIndex],
+                            "Instamint",
+                            snapshot.data?[1][selectedIndex],
+                          );
+                          if (hash != null) {
+                            setState(() {
+                              isMetamaskLoading = false;
+                            });
+                            //show a loading indicator
+                            TransactionResponse tx =
+                                await widget.mintNFTs!(hash);
+
+                            widget.refreshCallback!(tx);
+                            await Future.delayed(
+                                const Duration(milliseconds: 200));
+                            widget.tabController?.animateTo(2);
+                          } else {
+                            setState(() {
+                              isMetamaskLoading = false;
+                            });
+                            showToast(
+                                "A Connection error occured. Please try again",
+                                position: ToastPosition.bottom,
+                                textPadding: const EdgeInsets.all(8));
+                          }
+                        },
+
+                        child: const Text(
+                          'Confirm & Mint',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600),
                         ),
                       ),
-                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                          const EdgeInsets.all(20)),
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                          const Color(0xFF2E2B2B))),
-                  //mint NFT
-                  onPressed: () async {
-                    final hash = await widget.getHash!(
-                      snapshot.data?[0][selectedIndex],
-                      "Instamint",
-                      snapshot.data?[1][selectedIndex],
-                    );
-                    //show a loading indicator
-                    TransactionResponse tx = await widget.mintNFTs!(hash);
-                    widget.refreshCallback!(tx);
-                    await Future.delayed(const Duration(milliseconds: 200));
-                    widget.tabController?.animateTo(2);
-                  },
-
-                  child: const Text(
-                    'Confirm & Mint',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600),
+                      const SizedBox(width: 10),
+                      isMetamaskLoading == true
+                          ? const SpinKitHourGlass(
+                              color: Colors.black45,
+                              size: 30,
+                            )
+                          : const SizedBox()
+                    ],
                   ),
-                )
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.02,
+                ),
               ],
             );
           } else {
@@ -773,77 +839,132 @@ class FirstTab extends StatelessWidget {
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(
-            height: 20,
-          ),
-          const SizedBox(
+          SizedBox(
             height: 50,
             width: 50,
-            child: Image(
-                image: NetworkImage(
-                    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/800px-Instagram_logo_2016.svg.png")),
+            child: ResponsiveWidget.isSmallScreen(context)
+                ? SizedBox()
+                : Image(
+                    image: NetworkImage(
+                        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/800px-Instagram_logo_2016.svg.png")),
           ),
-          const SizedBox(height: 20),
-          const Text(
-            "Connect your Instagram",
+          SizedBox(
+              height: ResponsiveWidget.isSmallScreen(context)
+                  ? 10
+                  : MediaQuery.of(context).size.height * 0.036),
+          Text(
+            ResponsiveWidget.isSmallScreen(context)
+                ? ""
+                : "Connect your Instagram",
             style: TextStyle(
-              color: Color(0xFF4E4E4E),
+              color: const Color(0xFF4E4E4E),
               fontFamily: 'Sofia Pro',
               fontWeight: FontWeight.w600,
-              fontSize: 24,
+              fontSize: ResponsiveWidget.isSmallScreen(context)
+                  ? 18
+                  : MediaQuery.of(context).size.height * 0.030,
             ),
           ),
-          const SizedBox(height: 20),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 300.0),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.024),
+          Padding(
+            padding: ResponsiveWidget.isSmallScreen(context)
+                ? const EdgeInsets.symmetric(horizontal: 24.0)
+                : const EdgeInsets.symmetric(horizontal: 300.0),
             child: Text(
-              "Connect your Instagram account to import your pictures from Instagram. Instamint will NOT share or store your data ",
+              ResponsiveWidget.isSmallScreen(context)
+                  ? "We've got some really exciting news for you. Come back on your desktop to see what we have in store for you"
+                  : "Connect your Instagram account to import your pictures from Instagram. Instamint will NOT share or store your data ",
               textAlign: TextAlign.center,
               style: TextStyle(
                 height: 1.5,
-                color: Color(0xFF4E4E4E),
+                color: const Color(0xFF4E4E4E),
                 fontFamily: 'Sofia Pro',
                 fontWeight: FontWeight.w400,
-                fontSize: 18,
+                fontSize: ResponsiveWidget.isSmallScreen(context)
+                    ? 14
+                    : MediaQuery.of(context).size.height * 0.025,
               ),
             ),
           ),
-          const SizedBox(
-            height: 30,
-          ),
-          TextButton.icon(
-            style: ButtonStyle(
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50.0),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+          ResponsiveWidget.isSmallScreen(context)
+              ? SizedBox()
+              : TextButton.icon(
+                  style: ButtonStyle(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50.0),
+                        ),
+                      ),
+                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                          const EdgeInsets.all(20)),
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          const Color(0xFF2E2B2B))),
+                  //connect to instagram function
+                  onPressed: () async {
+                    function!();
+                    await Future.delayed(const Duration(milliseconds: 100));
+                    controller?.animateTo(1);
+                  },
+                  icon: const Icon(
+                    Icons.north_east,
+                    color: Colors.white,
+                    size: 20,
                   ),
-                ),
-                padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                    const EdgeInsets.all(20)),
-                backgroundColor:
-                    MaterialStateProperty.all<Color>(const Color(0xFF2E2B2B))),
-            //connect to instagram function
-            onPressed: () async {
-              function!();
-              await Future.delayed(const Duration(milliseconds: 100));
-              controller?.animateTo(1);
-            },
-            icon: const Icon(
-              Icons.north_east,
-              color: Colors.white,
-              size: 20,
-            ),
-            label: const Text(
-              'Connect',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600),
-            ),
-          )
+                  label: Text(
+                    'Connect',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: MediaQuery.of(context).size.height * 0.025,
+                        fontWeight: FontWeight.w600),
+                  ),
+                )
         ],
       ),
+    );
+  }
+}
+
+class ResponsiveWidget extends StatelessWidget {
+  final Widget largeScreen;
+  final Widget? mediumScreen;
+  final Widget? smallScreen;
+
+  const ResponsiveWidget({
+    Key? key,
+    required this.largeScreen,
+    this.mediumScreen,
+    this.smallScreen,
+  }) : super(key: key);
+
+  static bool isSmallScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width < 800;
+  }
+
+  static bool isLargeScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width > 1200;
+  }
+
+  static bool isMediumScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width >= 800 &&
+        MediaQuery.of(context).size.width <= 1200;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1200) {
+          return largeScreen;
+        } else if (constraints.maxWidth <= 1200 &&
+            constraints.maxWidth >= 800) {
+          return mediumScreen ?? largeScreen;
+        } else {
+          return smallScreen ?? largeScreen;
+        }
+      },
     );
   }
 }

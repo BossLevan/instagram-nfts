@@ -173,21 +173,27 @@ import 'dart:convert';
 // }
 
 class InstagramUtil {
-  final String? appID;
-  final String? appSecret;
+  // final String? appID;
+  // final String? appSecret;
   String? accessToken;
+  String? get localAccessCode {
+    _accessCodeLocal = accessCode;
+    return _accessCodeLocal;
+  }
+
   final String? accessCode;
+  String? _accessCodeLocal;
   String? igUserID;
+  final String _appSecret = 'c4184d43c30358047ce4a5464e0602e6';
+  final String _appID = '466508148203801';
   InstagramUtil({
     @required this.accessCode,
-    this.appSecret = 'c4184d43c30358047ce4a5464e0602e6',
-    this.appID = '466508148203801',
   });
 
   Future<List<String>> getShortLivedToken() async {
     var map = <String, dynamic>{};
-    map['client_id'] = appID;
-    map['client_secret'] = appSecret;
+    map['client_id'] = _appID;
+    map['client_secret'] = _appSecret;
     map['grant_type'] = 'authorization_code';
     map['redirect_uri'] = 'https://instamint.web.app/static.html';
     map['code'] = accessCode;
